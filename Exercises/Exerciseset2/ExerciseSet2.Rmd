@@ -165,6 +165,69 @@ print(m1,'chart')
 <br>
 
 **Your Answers here:**
+
+1. `r length(which(Variance_Explained_Table[,"Cumulative_percentage_of_explained_variance"]<50))+1`
+2. `r round(max(Variance_Explained_Table[,"Eigenvalue"]),2)`
+3. The first 10 components captures `r round(Variance_Explained_Table[10,4],2)`% of the original data
+
+4a. Pre-crisis
+
+
+```{r echo=TRUE, eval=TRUE, comment=NA, warning=FALSE,error=FALSE, message=FALSE, prompt=FALSE, tidy=TRUE}
+
+Variance_Explained_Table_results<-PCA(futures_data[as.Date(rownames(futures_data)) > "2002-11-01" & as.Date(rownames(futures_data)) < "2007-10-01", ], graph=FALSE)
+Variance_Explained_Table<-cbind(paste("component",1:ncol(futures_data[as.Date(rownames(futures_data)) > "2007-10-01" & as.Date(rownames(futures_data)) < "2009-03-01", ]),sep=" "),Variance_Explained_Table_results$eig)
+Variance_Explained_Table<-as.data.frame(Variance_Explained_Table)
+colnames(Variance_Explained_Table)<-c("Component","Eigenvalue", "Percentage_of_explained_variance", "Cumulative_percentage_of_explained_variance")
+```
+
+```{r echo=FALSE, comment=NA, warning=FALSE, message=FALSE, results='asis'}
+show_data = data.frame(Variance_Explained_Table)
+m1<-gvisTable(show_data,options=list(width=1920, height=min(400,27*(nrow(show_data)+1)),allowHTML=TRUE,page='disable'),formats=list(Eigenvalue="#.##",Percentage_of_explained_variance="#.##",Cumulative_percentage_of_explained_variance="#.##"))
+print(m1,'chart')
+```
+
+```{r echo=TRUE, eval=TRUE, comment=NA, warning=FALSE,error=FALSE, message=FALSE, prompt=FALSE, tidy=TRUE}
+eigenvalues  <- Variance_Explained_Table[,2]
+```
+
+```{r Fig2, echo=FALSE, comment=NA, results='asis', message=FALSE, fig.align='center', fig=TRUE}
+df           <- cbind(as.data.frame(eigenvalues), c(1:length(eigenvalues)), rep(1, length(eigenvalues)))
+colnames(df) <- c("eigenvalues", "components", "abline")
+Line         <- gvisLineChart(as.data.frame(df), xvar="components", yvar=c("eigenvalues","abline"), options=list(title='Scree plot', legend="right", width=900, height=600, hAxis="{title:'Number of Components', titleTextStyle:{color:'black'}}", vAxes="[{title:'Eigenvalues'}]",  series="[{color:'green',pointSize:3, targetAxisIndex: 0}]"))
+print(Line, 'chart')
+```
+
+
+4b. Financial Crisis Years:
+
+```{r echo=TRUE, eval=TRUE, comment=NA, warning=FALSE,error=FALSE, message=FALSE, prompt=FALSE, tidy=TRUE}
+
+Variance_Explained_Table_results<-PCA(futures_data[as.Date(rownames(futures_data)) > "2007-10-01" & as.Date(rownames(futures_data)) < "2009-03-01", ], graph=FALSE)
+Variance_Explained_Table<-cbind(paste("component",1:ncol(futures_data[as.Date(rownames(futures_data)) > "2007-10-01" & as.Date(rownames(futures_data)) < "2009-03-01", ]),sep=" "),Variance_Explained_Table_results$eig)
+Variance_Explained_Table<-as.data.frame(Variance_Explained_Table)
+colnames(Variance_Explained_Table)<-c("Component","Eigenvalue", "Percentage_of_explained_variance", "Cumulative_percentage_of_explained_variance")
+```
+
+```{r echo=FALSE, comment=NA, warning=FALSE, message=FALSE, results='asis'}
+show_data = data.frame(Variance_Explained_Table)
+m1<-gvisTable(show_data,options=list(width=1920, height=min(400,27*(nrow(show_data)+1)),allowHTML=TRUE,page='disable'),formats=list(Eigenvalue="#.##",Percentage_of_explained_variance="#.##",Cumulative_percentage_of_explained_variance="#.##"))
+print(m1,'chart')
+```
+
+```{r echo=TRUE, eval=TRUE, comment=NA, warning=FALSE,error=FALSE, message=FALSE, prompt=FALSE, tidy=TRUE}
+eigenvalues  <- Variance_Explained_Table[,2]
+```
+
+```{r Fig3, echo=FALSE, comment=NA, results='asis', message=FALSE, fig.align='center', fig=TRUE}
+df           <- cbind(as.data.frame(eigenvalues), c(1:length(eigenvalues)), rep(1, length(eigenvalues)))
+colnames(df) <- c("eigenvalues", "components", "abline")
+Line         <- gvisLineChart(as.data.frame(df), xvar="components", yvar=c("eigenvalues","abline"), options=list(title='Scree plot', legend="right", width=900, height=600, hAxis="{title:'Number of Components', titleTextStyle:{color:'black'}}", vAxes="[{title:'Eigenvalues'}]",  series="[{color:'green',pointSize:3, targetAxisIndex: 0}]"))
+print(Line, 'chart')
+```
+
+5. During the crisis, the first component (factor of government bonds) became very strong, compared to the pre-crisis period. As such, we can clearly see two moments that influence drasticaly the results. During the crisis, results were much more correlated to the first component
+
 <br>
 <br>
 <br>
@@ -179,7 +242,7 @@ We can now develop a simple futures trend following trading strategy, as outline
 
 We will do the following: 
 
-1. Calculate a number of moving averages of different "window lengths" for each of the `r ncol(futures_data)` futures - there are [many](http://www.r-bloggers.com/stock-analysis-using-r/) so called [technical indicators](http://www.investopedia.com/active-trading/technical-indicators/) one can use. We will use  the  "moving average" function `ma` for this (try for example to see what this returns `ma(1:10,2)` ). 
+1. Calculate a number of moving averages of different "window lengths" for each of the `r ncol(futures_data)` futures - there are [many](http://www.r-bloggers.com/stock-analysis-using-r/) so called [technical indicators](http://www.investopedia.com/active-trading/technical-indicators/) one can use. We will use  the  "moving average" function `ma` for this (try for example to see what this returns ` ma(1:10,2)` ). 
 2. Add the signs (can also use the actual moving average values of course - try it!) of these moving averages (as if they "vote"), and then scale this sum across all futures so that the sum of their (of the sum across all futures!) absolute value across all futures is 1 (hence we invest $1 every day - you see why?).
 3. Then invest every day in each of the `r ncol(futures_data)` an amount that is defined by the weights calculated in step 2, using however the weights calculated using data until 2 days ago (why 2 days and not 1 day?) - see the use of the helper function `shift` for this. 
 4. Finally see the performance of this strategy. 
@@ -190,7 +253,7 @@ Here is the code.
 ```{r echo=TRUE, eval=TRUE, comment=NA, warning=FALSE,error=FALSE, message=FALSE, prompt=FALSE, tidy=TRUE}
 signal_used = 0*futures_data # just initialize the trading signal to be 0
 # Take many moving Average (MA) Signals and let them "vote" with their sign (+-1, e.g. long or short vote, for each signal)
-MAfreq<-seq(10,250,by=20)
+MAfreq<-seq(10,250,by=50)
 for (iter in 1:length(MAfreq))
   signal_used = signal_used + sign(apply(futures_data,2, function(r) ma(r,MAfreq[iter])))
 # Now make sure we invest $1 every day (so the sum of the absolute values of the weights is 1 every day)
@@ -249,6 +312,17 @@ How does this compare with **existing CTA products** such as [this one from Soci
 <br>
 
 **Your Answers here:**
+
+1. 
+
+MAfreq<-seq(10,250,by=20) collects the data starting from 10 and jumping by 20 units
+
+`r seq(10,250,by=20)`
+
+Then, it loops to check moving averages vs actual data and puts marks on it. Finally, it indicates buy/sell decisions based on the benchmark
+
+2. After some tests, we found out that changing such parameters the returns fluctuate alongside the sharpe ratio (positive correlation), which is something that we would normally expect
+
 <br>
 <br>
 <br>
